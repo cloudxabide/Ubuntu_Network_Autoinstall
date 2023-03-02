@@ -74,6 +74,8 @@ cp shimx64.efi /var/lib/tftpboot/efi/ubuntu-22.04.2-live-server-amd64/
 
 ## DHCP foo
 Add the following to /etc/dhcpd/dhcpd.conf (Notice the "filename" param matches the EFI Shim section
+Again, since all of my systems are RHEL based, I had to deviate a bit to accommodate the Ubuntu box.  As such, I specify a shim file *just* for this DHCP client (which, actually is not a bad approach).
+
 ```
 # MORPHEUS (intel NUC - i7 (dark color, older - blue front display))
 host morpheus {
@@ -92,6 +94,44 @@ mkdir ubuntu-22.04.2-live-server-amd64
 find /var/www/OS/ubuntu-22.04.2-live-server-amd64/ -name vmlinuz -exec cp {} /var/lib/tftpboot/ubuntu-22.04.2-live-server-amd64 \;
 find /var/www/OS/ubuntu-22.04.2-live-server-amd64/ -name initrd -exec cp {} /var/lib/tftpboot/ubuntu-22.04.2-live-server-amd64 \;
 ```
+
+## Grub.cfg (boot menu)
+
+Note, you will create the following file using your own MAC address.  But, notice there is a leading "-01-" before the MAC
+```
+cat << EOF > /var/lib/tftpboot/efi/grub.cfg-01-##-##-##-##-##-##
+set timeout=30
+
+loadfont unicode
+
+set menu_color_normal=white/black
+set menu_color_highlight=black/light-gray
+
+menuentry "Install Ubuntu Desktop (22.04.2)" {
+        set gfxpayload=keep
+        linux   /ubuntu-22.04.2-live-server-amd64/vmlinuz url=http://10.10.10.10/ISOS/ubuntu-22.04.2-live-server-amd64.iso only-ubiquity ip=dhcp autoinstall ds=nocloud-net;s=http://10.10.10.10/Kickstart/MORPHEUS/ cloud-config-url=http://10.10.10.10/Kickstart/MORPHEUS/user-data ---
+        initrd  /ubuntu-22.04.2-live-server-amd64/initrd
+}
+
+menuentry "Try or Install Ubuntu" {
+	set gfxpayload=keep
+	linux	/ubuntu-22.04.2-live-server-amd64/vmlinuz url=http://10.10.10.10/ISOS/ubuntu-22.04.2-live-server-amd64.iso maybe-ubiquity quiet splash --- 
+        initrd  /ubuntu-22.04.2-live-server-amd64/initrd
+}
+grub_platform
+if [ "$grub_platform" = "efi" ]; then
+menuentry 'Boot from next volume' {
+	exit 1
+}
+menuentry 'UEFI Firmware Settings' {
+	fwsetup
+}
+else
+menuentry 'Test memory' {
+	linux16 /boot/memtest86+.bin
+}
+fi
+EOF
 
 ## Cleanup SELinux
 ```
