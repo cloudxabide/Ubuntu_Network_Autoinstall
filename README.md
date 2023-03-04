@@ -132,6 +132,7 @@ menuentry 'Test memory' {
 }
 fi
 EOF
+```
 
 ## Cleanup SELinux
 ```
