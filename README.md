@@ -96,6 +96,15 @@ find /var/www/OS/ubuntu-22.04.2-live-server-amd64/ -name initrd -exec cp {} /var
 ```
 
 ## Grub.cfg (boot menu)
+This is monumentall aggravating.  I don't see why Ubuntu decided to do kickstart differently, and the challenges that decision has created is a pain.
+
+nocloud: https://cloudinit.readthedocs.io/en/17.2/topics/datasources/nocloud.html
+
+* The format of the first line "shebang", a.k.a. #cloud-config matters. Do not change it or input extra spaces unless you know what you are doing.
+* The double quotes matter when injecting user-data in the kernel parameters.
+* The file name user-data is a must. Its the file name that cloud-init will look for.
+* The file meta-data is also a must, even it is an empty file in our example.
+* The trailing slash of the url serving user-data matters in the current autoinstall version.
 
 Note, you will create the following file using your own MAC address.  But, notice there is a leading "-01-" before the MAC
 ```
@@ -109,7 +118,7 @@ set menu_color_highlight=black/light-gray
 
 menuentry "Install Ubuntu Desktop (22.04.2)" {
         set gfxpayload=keep
-        linux   /ubuntu-22.04.2-live-server-amd64/vmlinuz url=http://10.10.10.10/ISOS/ubuntu-22.04.2-live-server-amd64.iso only-ubiquity ip=dhcp autoinstall ds=nocloud-net;s=http://10.10.10.10/Kickstart/MORPHEUS/ cloud-config-url=http://10.10.10.10/Kickstart/MORPHEUS/user-data ---
+        linux   /ubuntu-22.04.2-live-server-amd64/vmlinuz url=http://10.10.10.10/ISOS/ubuntu-22.04.2-live-server-amd64.iso only-ubiquity ip=dhcp autoinstall "ds=nocloud-net;s=http://10.10.10.10/Kickstart/MORPHEUS/ cloud-config-url=http://10.10.10.10/Kickstart/MORPHEUS/user-data ---
         initrd  /ubuntu-22.04.2-live-server-amd64/initrd
 }
 
@@ -149,5 +158,6 @@ tcpdump -i ens192 -vvv -s 1500 '((port 67 or port 68 or port 69))'
 tail -f /var/log/httpd/access_log
 ```
 
-
+## References
+https://github.com/dannf/ubuntu-server-netboot
 
